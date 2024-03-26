@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>User's Images Gallery</title>
+</head>
+<body>
+<form th:action="@{/users/{userId}/userImages/addImage(userId = ${user.get().getId()})}"
+      enctype="multipart/form-data" method="post">
+    <label for="image">Image:
+        <input id="image" type="file" name="image">
+    </label>
+    <br><br>
+    <button type="submit">Add New Image</button>
+</form><br>
+
+<table>
+    <thead>
+    <tr>
+        <th>Image</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <div th:if="${not imageList.isEmpty()}">
+        <div th:each="image : ${imageList}">
+            <tr>
+                <td>
+                    <div> Image:
+                        <img width="100" th:src="@{/api/v1/userImages/{imageId}/pics(imageId=${image.getId()})}"
+                             alt="images">
+                    </div>
+                </td>
+                <td>
+                    <form th:action="@{'/users/' + ${user.get().getId()} + '/userImages/'
+                    + ${image.getId()} +'/removeImage'}" method="post">
+                        <button type="submit">Remove Image From List</button>
+                    </form>
+                </td>
+           </tr>
+        </div>
+    </div>
+    </tbody>
+</table><br>
+
+</body>
+</html>
