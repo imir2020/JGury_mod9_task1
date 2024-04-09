@@ -14,7 +14,7 @@ import java.util.function.Predicate;
 @Component
 @RequiredArgsConstructor
 public class DtoToUserMapper implements Mapper<DtoToUser, User> {
-    
+
     private final CompanyRepository companyRepository;
 
     @Override

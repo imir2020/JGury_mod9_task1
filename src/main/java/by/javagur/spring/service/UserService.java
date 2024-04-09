@@ -11,11 +11,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,7 +28,7 @@ import static by.javagur.spring.database.entity.QUser.user;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class UserService {
+public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final UserToDtoMapper userReadMapper;
     private final DtoToUserMapper userCreateEditMapper;
@@ -92,11 +96,12 @@ public class UserService {
                 .filter(StringUtils::hasText)
                 .flatMap(imageService::get);
     }
+
     @Transactional
     @SneakyThrows
     public Long addUserImage(Long userId, MultipartFile image) {
         uploadImage(image);
-        UserImageToDto userImageToDto = userImageService.create(new DtoToUserImage(userId,image));
+        UserImageToDto userImageToDto = userImageService.create(new DtoToUserImage(userId, image));
         UserImage map = userImageToDtoMapper.map(userImageToDto);
         userRepository.findById(userId)
                 .map(user -> {
@@ -131,5 +136,17 @@ public class UserService {
                     return true;
                 })
                 .orElse(false);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByUsername(username)
+                .map(user -> new org.springframework.security.core.userdetails.User(
+                        user.getUsername(),
+                        user.getPassword(),
+                        Collections.singleton(user.getRole())
+                ))
+                .orElseThrow(() -> new UsernameNotFoundException("Failed to retrieve user: " + username));
+
     }
 }

@@ -6,7 +6,6 @@ import lombok.Value;
 
 @Value
 public class UserImageToDto {
-
     Long id;
     String image;
     User user;

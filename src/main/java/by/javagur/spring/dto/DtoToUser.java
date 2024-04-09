@@ -17,7 +17,6 @@ import java.time.LocalDate;
 public class DtoToUser {
     @Email
     String username;
-
     @DateTimeFormat(pattern = "dd-MM-yyyy")
     LocalDate birthDate;
     @Size(min = 3, max = 30)
@@ -26,4 +25,5 @@ public class DtoToUser {
     Role role;
     Integer companyId;
     MultipartFile image;
+    String password;
 }

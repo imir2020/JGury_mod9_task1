@@ -10,6 +10,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.annotation.CurrentSecurityContext;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -17,6 +21,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 
 @Slf4j
 @Controller
@@ -27,6 +32,7 @@ public class UserController {
     private final CompanyService companyService;
     private final UserImageService userImageService;
 
+
     @GetMapping
     public String findAll(Model model, UserFilter filter, Pageable pageable) {
         Page<UserToDto> page = userService.findAll(filter, pageable);
@@ -34,6 +40,7 @@ public class UserController {
         model.addAttribute("filter", filter);
         return "user/users";
     }
+
 
     @GetMapping("/registration")
     public String registration(Model model, @ModelAttribute("user") DtoToUser user) {
@@ -43,10 +50,18 @@ public class UserController {
         return "user/registration";
     }
 
+
     @GetMapping("/{id}")
-    public String findById(@PathVariable("id") Long id, Model model) {
+    public String findById(@PathVariable("id") Long id, Model model,
+                           @CurrentSecurityContext SecurityContext securityContext,
+                           @AuthenticationPrincipal UserDetails userDetails) {
+
+        String userName = userDetails.getUsername();
         return userService.findById(id)
                 .map(user -> {
+                    if (!userName.equals(user.getUsername()) && userDetails.getAuthorities().contains(Role.USER)) {
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not access!!!");
+                    }
                     model.addAttribute("user", user);
                     model.addAttribute("roles", Role.values());
                     model.addAttribute("companies", companyService.findAll());
@@ -61,7 +76,7 @@ public class UserController {
         model.addAttribute("user", userService.findById(id));
         model.addAttribute("imageList", userImageService.findAllByUserId(id));
 
-        return "/user/userImage";
+        return "user/userImage";
     }
 
 
@@ -98,7 +113,7 @@ public class UserController {
     public String removeImage(@PathVariable("userId") Long userId,
                               @PathVariable("imageId") Long imageId,
                               @ModelAttribute DtoToUserImage imageCreateEditDto) {
-        userService.removeUserImage(userId, imageId);
+        var result = userService.removeUserImage(userId, imageId);
         return "redirect:/users/" + userId + "/userImages";
     }
 
@@ -109,5 +124,4 @@ public class UserController {
         }
         return "redirect:/users";
     }
-
 }
