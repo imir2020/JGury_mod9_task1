@@ -8,6 +8,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 
 import static by.javagur.spring.database.entity.Role.*;
@@ -23,9 +24,10 @@ public class SecurityConfiguration {
     @Bean
     @Order(SecurityProperties.BASIC_AUTH_ORDER)
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(auth -> auth
+        http.csrf(CsrfConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/users/registration",
-                                "/v3/api-docs/", "/swagger-ui/","/users/{userId}/userImages").permitAll()
+                                "/v3/api-docs/", "/swagger-ui/").permitAll()
                         .requestMatchers("/admin/**").hasAnyAuthority(ADMIN.getAuthority())
                         .requestMatchers(antMatcher("/users/{\\d}")).hasAnyAuthority(ADMIN.getAuthority(),
                                 USER.getAuthority(), OPERATOR.getAuthority())
